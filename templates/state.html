@@ -1,0 +1,37 @@
+<h1>{{state_name}}</h1>
+<p>There are {{powerplants | length }} powerplants in {{state_name}}</p>
+
+<ul>
+    {% for plant in powerplants %}
+    <li><a href="/powerplants/{{plant['Plant_Code']}}">{{plant['Plant_Name']}}</a></li>
+    {% endfor %}
+</ul>
+
+<h2>Map of power plants in this state</h2>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+ <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+    #map { height: 300px; }
+</style>
+
+<div id="map"></div>
+
+<script type="text/javascript">
+    var map = L.map('map');
+    const bounds = L.latLngBounds([]);
+
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    {% for plant in powerplants %}
+        marker = L.marker([{{plant['Latitude']}}, {{plant['Longitude']}}]).addTo(map)
+            .bindPopup('{{plant['Plant_Name']}}')
+
+        bounds.extend(marker.getLatLng());
+    {% endfor %}
+
+    map.fitBounds(bounds, { padding: [30, 30]});
+</script>

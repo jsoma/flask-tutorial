@@ -1,0 +1,8 @@
+<h1>This is all your powerplants</h1>
+<p>Hello!</p>
+<p>You have {{powerplants | length}} powerplants</p>
+<ul>
+    {% for plant in powerplants %}
+    <li><a href="/powerplants/{{plant['Plant_Code']}}">{{plant['Plant_Name']}}</a></li>
+    {% endfor %}
+</ul>
