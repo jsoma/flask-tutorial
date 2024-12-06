@@ -26,7 +26,7 @@ def hello_world():
     return "<p>Hello, World!</p>"
 ```
 
-Then run it. The command below works because we called it `app.py`.
+Then run it. The command below works because we called it `app.py`. Run this from the **command line.**
 
 ```
 flask run --debug
@@ -345,6 +345,130 @@ And the `state.html` file:
     map.fitBounds(bounds, { padding: [30, 30]});
 </script>
 ```
+
+## Pagination
+
+Now let's head back to a listing page: **we need to display more than just twenty elements.
+
+We're going to adjust things so we can access more powerplants through the URL, like `/powerplants?page=3`.
+
+To access that parameter from Flask, we need to add another import:
+
+```py
+from flask import Flask, render_template, request
+```
+
+Now let's add some code inside of `/powerplants`. Previously we just took the first twenty. Now we'll look at the current page in the URL and just based on that. If it's 20 per page, on page 3, we'll start on 20 * 3 = 60, and end with 60 + 20 = 80.
+
+```py
+# Before
+# powerplants = powerplants[:20]
+
+# After
+PER_PAGE = 20
+current_page = int(request.args.get('page', 1))
+start = PER_PAGE * current_page - PER_PAGE
+end = PER_PAGE * current_page
+
+powerplants = powerplants[start:end]
+```
+
+If you refresh and just the URL with `?page=3`, `?page=4`, etc, you'll be able to see different batches of power plants.
+
+Next up we need to **add the pagination links**. We can do this by using the [flask-paginate](https://pythonhosted.org/Flask-paginate/) package. Start by installing it:
+
+```
+pip install flask-paginate
+```
+
+To use it, we need to make two adjustments, **one inside of the route and the other inside of the HTML**.
+
+Inside of the route, we'll add two pieces: first we'll build a `pagination` object and secondly we'll send the `pagination` object to the template.
+
+```py
+pagination = Pagination(total=df.shape[0],
+                        page=current_page,
+                        per_page=PER_PAGE)
+
+
+# Send the dicts to the page
+return render_template(
+    'powerplants.html',
+    powerplants=powerplants,
+    pagination=pagination
+)
+```
+
+The `Pagination` object takes the total amount of rows in the dataframe, the current page, and the number per page, packaging it all up. If we were using a database we could be fancier with it, but since we aren't... we won't!
+
+To actually show the results on the HTML page, we now adjust `powerplants.html` to render the links:
+
+```py
+{{ pagination.link }}
+```
+
+And if you want to make it look nice? Add some CSS! You can just drop it down into the bottom of the HTML file.
+
+```html
+<style>
+.pagination {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+  justify-content: center;
+}
+
+.page-item {
+  margin: 0 5px;
+}
+
+.page-link {
+  display: block;
+  padding: 10px 15px;
+  text-decoration: none;
+  border: 1px solid #dee2e6;
+  background-color: #fff;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.page-link:hover {
+  background-color: #f0f0f0;
+}
+
+.page-item.active .page-link {
+  background-color: #007bff;
+  color: #fff;
+  border-color: #007bff;
+}
+
+.page-item.disabled .page-link {
+  color: #6c757d;
+  pointer-events: none;
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+}
+
+/* Adjustments for small screens */
+@media (max-width: 576px) {
+  .pagination {
+    flex-wrap: wrap;
+  }
+
+  .page-item {
+    margin: 3px;
+  }
+
+  .page-link {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+}
+
+</style>
+```
+
+If you also have URLs that are based on other filters, you should be able to re-use all of the code for them as well.
 
 ## There you go!
 

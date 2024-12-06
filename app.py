@@ -1,5 +1,6 @@
 import pandas as pd
-from flask import Flask, render_template
+from flask import Flask, render_template, request
+from flask_paginate import Pagination
 
 app = Flask(__name__)
 
@@ -14,12 +15,23 @@ def powerplants():
     powerplants = df.to_dict('records')
 
     # Let's only send 20 for now
-    powerplants = powerplants[:20]
+    PER_PAGE = 20
+    current_page = int(request.args.get('page', 1))
+    start = PER_PAGE * current_page - PER_PAGE
+    end = PER_PAGE * current_page
+
+    powerplants = powerplants[start:end]
+
+    pagination = Pagination(total=df.shape[0],
+                            page=current_page,
+                            per_page=PER_PAGE)
+
 
     # Send the dicts to the page
     return render_template(
         'powerplants.html',
-        powerplants=powerplants
+        powerplants=powerplants,
+        pagination=pagination
     )
 
 @app.route("/powerplants/<int:plant_id>")
